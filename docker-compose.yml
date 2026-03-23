@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: voice-tts-backend
+    container_name: voice-tts-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - voice_data:/app/data
+      - ./backend/static:/app/static:ro
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8080
+    # Uncomment to use GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  frontend-builder:
+    image: node:20-alpine
+    container_name: voice-tts-frontend-builder
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - ./backend/static:/app/dist
+    command: sh -c "npm ci && npm run build"
+    profiles:
+      - build
+
+volumes:
+  voice_data:
